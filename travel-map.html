@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crossfire Travel Map</title>
+<link rel="SHORTCUT ICON" href="https://www.crossfireatlas.net/favicon.ico">
+<style>
+  :root {
+    --paper: #eee3c8;
+    --paper-dark: #e2d4b2;
+    --sea: #b7c6bd;
+    --coast: #5a4632;
+    --ink: #3a2c1a;
+    --ink-dim: #7a6648;
+    --paved: #8a4a2a;
+    --minor: #a8763f;
+    --searoute: #3d6b8c;
+    --city: #c99a35;
+    --panel: #f4ecd8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+    min-height: 100vh;
+  }
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 20px 10px;
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.5em; letter-spacing: 1px; color: #e8c05a; }
+  header .sub { color: #cbb98f; font-size: 0.9em; }
+  header a { color: #e8c05a; }
+  main {
+    display: flex;
+    gap: 20px;
+    padding: 16px 20px 30px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  #mapArea { flex: 1 1 600px; min-width: 320px; }
+  #mapFrame {
+    width: 100%;
+    max-width: 900px;
+    border: 3px double var(--coast);
+    background: var(--sea);
+    border-radius: 3px;
+  }
+  #mapFrame svg { display: block; width: 100%; height: auto; }
+  #hint { color: var(--ink-dim); font-size: 0.85em; margin-top: 8px; }
+  /* sidebar */
+  #sidebar { flex: 0 0 250px; display: flex; flex-direction: column; gap: 16px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--coast);
+    border-radius: 6px;
+    padding: 12px 14px;
+    box-shadow: 2px 2px 0 rgba(90,70,50,0.15);
+  }
+  .panel h2 {
+    margin: 0 0 10px;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--paved);
+    border-bottom: 1px solid var(--paper-dark);
+    padding-bottom: 6px;
+  }
+  .legendRow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 0.92em; }
+  .legendRow svg { flex: 0 0 44px; }
+  .layerRow { margin-bottom: 6px; font-size: 0.92em; }
+  .layerRow label { cursor: pointer; }
+  #cityList { margin: 0; padding: 0; list-style: none; font-size: 0.92em; column-count: 2; }
+  #cityList li { margin-bottom: 4px; break-inside: avoid; }
+  #cityList a { color: var(--paved); text-decoration: none; }
+  #cityList a:hover { text-decoration: underline; }
+  .about { font-size: 0.85em; color: var(--ink-dim); }
+  .about a { color: var(--paved); }
+  /* svg elements */
+  .land { fill: var(--paper); stroke: var(--coast); stroke-width: 2.5; stroke-linejoin: round; }
+  .roadPaved { fill: none; stroke: var(--paved); stroke-width: 3.2; stroke-linecap: round; }
+  .roadMinor { fill: none; stroke: var(--minor); stroke-width: 2; stroke-dasharray: 7 5; stroke-linecap: round; }
+  .roadSea { fill: none; stroke: var(--searoute); stroke-width: 2.4; stroke-dasharray: 10 7; stroke-linecap: round; }
+  .cityDot { fill: var(--city); stroke: var(--ink); stroke-width: 2; cursor: pointer; }
+  .cityDot:hover { fill: #ffd76e; }
+  .cityLabel {
+    font-family: Georgia, serif;
+    font-size: 26px;
+    fill: var(--ink);
+    paint-order: stroke;
+    stroke: var(--paper);
+    stroke-width: 6;
+    stroke-linejoin: round;
+    cursor: pointer;
+  }
+  .compass { fill: var(--coast); opacity: 0.75; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Crossfire Travel Map</h1>
+  <span class="sub">cities, roads &amp; sea lanes of the known world &middot;
+    <a href="https://tannerrj.github.io/crossfire-world-map-navigator/map-navigator.html">tile navigator</a> &middot;
+    <a href="https://www.crossfireatlas.net/">Crossfire Atlas</a></span>
+</header>
+
+<main>
+  <div id="mapArea">
+    <div id="mapFrame"></div>
+    <div id="hint">Click a city to open it in the world map navigator.
+      Data is extracted from the Crossfire map sources.</div>
+  </div>
+
+  <div id="sidebar">
+    <div class="panel">
+      <h2>Legend</h2>
+      <div class="legendRow"><svg viewBox="0 0 44 12" width="44" height="12"><line x1="2" y1="6" x2="42" y2="6" class="roadPaved"/></svg> Paved road</div>
+      <div class="legendRow"><svg viewBox="0 0 44 12" width="44" height="12"><line x1="2" y1="6" x2="42" y2="6" class="roadMinor"/></svg> Dirt road / footpath</div>
+      <div class="legendRow"><svg viewBox="0 0 44 12" width="44" height="12"><line x1="2" y1="6" x2="42" y2="6" class="roadSea"/></svg> Sea route</div>
+      <div class="legendRow"><svg viewBox="0 0 44 14" width="44" height="14"><circle cx="22" cy="7" r="5" class="cityDot"/></svg> City or town</div>
+    </div>
+
+    <div class="panel">
+      <h2>Layers</h2>
+      <div class="layerRow"><label><input type="checkbox" id="lyrPaved" checked> Paved roads</label></div>
+      <div class="layerRow"><label><input type="checkbox" id="lyrMinor" checked> Dirt roads &amp; footpaths</label></div>
+      <div class="layerRow"><label><input type="checkbox" id="lyrSea" checked> Sea routes</label></div>
+      <div class="layerRow"><label><input type="checkbox" id="lyrLabels" checked> City names</label></div>
+    </div>
+
+    <div class="panel">
+      <h2>Destinations</h2>
+      <ul id="cityList"></ul>
+    </div>
+
+    <div class="panel about">
+      Coastline, roads, and cities are generated from the
+      <a href="https://sourceforge.net/p/crossfire/crossfire-maps/">Crossfire map sources</a>
+      by <code>tools/generate-travel-map-data.py</code> &mdash; nothing is hand-drawn.
+    </div>
+  </div>
+</main>
+
+<script src="travel-map-data.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // Where "open this city" links go. The live navigator demo by default;
+  // an Atlas world/ deployment can use the relative page instead.
+  var NAVIGATOR_URL =
+    'https://tannerrj.github.io/crossfire-world-map-navigator/map-navigator.html';
+
+  // Per-city label placement tweaks (anchor side and optional y nudge),
+  // for cities near the map edge or crowded by neighbors.
+  var LABEL_TWEAKS = {
+    'Port Joseph':     { side: 'right' },
+    'Wolfsburg':       { side: 'left' },
+    'Azumauindo':      { side: 'left' },
+    'Whaling Outpost': { side: 'left' },
+    'Scorn':           { side: 'right', dy: -14 },
+    'Euthville':       { side: 'right', dy: -6 },
+    'Narcopin':        { side: 'left' },
+    'Navar':           { side: 'right', dy: -16 }
+  };
+
+  var NS = 'http://www.w3.org/2000/svg';
+  function el(name, attrs, parent) {
+    var e = document.createElementNS(NS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  var svg = el('svg', {
+    viewBox: '0 0 ' + TRAVEL_MAP.size + ' ' + TRAVEL_MAP.size,
+    role: 'img', 'aria-label': 'Schematic travel map of the Crossfire world'
+  });
+  document.getElementById('mapFrame').appendChild(svg);
+
+  // Land masses: one path, even-odd so any nested rings would still render.
+  el('path', {
+    'class': 'land',
+    d: TRAVEL_MAP.coast.join(' '),
+    'fill-rule': 'evenodd'
+  }, svg);
+
+  // Road layers.
+  var layers = {};
+  function roadLayer(key, cls, dotR) {
+    var g = el('g', { 'class': cls }, svg);
+    var data = TRAVEL_MAP.roads[key];
+    if (data.path) el('path', { d: data.path }, g);
+    data.dots.forEach(function (d) {
+      el('circle', { cx: d[0] + 0.5, cy: d[1] + 0.5, r: dotR,
+                     fill: 'currentColor', stroke: 'none' }, g);
+    });
+    layers[key] = g;
+  }
+  roadLayer('minor', 'roadMinor', 1.6);
+  roadLayer('paved', 'roadPaved', 2);
+  roadLayer('sea', 'roadSea', 1.8);
+
+  // Cities: dots above roads, labels above dots.
+  var gCities = el('g', {}, svg);
+  var gLabels = el('g', {}, svg);
+  layers.labels = gLabels;
+  var list = document.getElementById('cityList');
+
+  TRAVEL_MAP.cities.forEach(function (c) {
+    var url = NAVIGATOR_URL + '#' + c.tx + ',' + c.ty + ',2';
+    var tip = c.name + ' (world_' + c.tx + '_' + c.ty + ')';
+    var dot = el('circle', { cx: c.x, cy: c.y, r: 9, 'class': 'cityDot' }, gCities);
+    var tweak = LABEL_TWEAKS[c.name] || {};
+    var side = tweak.side ||
+      (c.x > TRAVEL_MAP.size * 0.75 ? 'left' : 'right');
+    var label = el('text', {
+      x: c.x + (side === 'left' ? -16 : 16),
+      y: c.y + 9 + (tweak.dy || 0),
+      'text-anchor': side === 'left' ? 'end' : 'start',
+      'class': 'cityLabel'
+    }, gLabels);
+    label.textContent = c.name;
+    [dot, label].forEach(function (n) {
+      el('title', {}, n).textContent = tip;
+      n.addEventListener('click', function () { window.open(url, '_blank'); });
+    });
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.textContent = c.name;
+    li.appendChild(a);
+    list.appendChild(li);
+  });
+
+  // Compass rose, on the empty steppe of the northeastern interior.
+  var cx = 940, cy = 330, R = 62;
+  var rose = el('g', { 'class': 'compass',
+    transform: 'translate(' + cx + ' ' + cy + ')' }, svg);
+  for (var i = 0; i < 8; i++) {
+    var big = i % 2 === 0;
+    var r1 = big ? R : R * 0.55, r2 = R * 0.16;
+    var a0 = i * Math.PI / 4 - Math.PI / 2;
+    var p = function (r, a) { return (r * Math.cos(a)).toFixed(1) + ' ' + (r * Math.sin(a)).toFixed(1); };
+    el('path', { d: 'M' + p(r1, a0) + 'L' + p(r2, a0 - Math.PI / 8) +
+                    'L0 0L' + p(r2, a0 + Math.PI / 8) + 'Z' }, rose);
+  }
+  var nLabel = el('text', { x: 0, y: -R - 12, 'text-anchor': 'middle',
+    'class': 'cityLabel', 'font-size': 30 }, rose);
+  nLabel.textContent = 'N';
+
+  // Layer toggles.
+  [['lyrPaved', 'paved'], ['lyrMinor', 'minor'],
+   ['lyrSea', 'sea'], ['lyrLabels', 'labels']].forEach(function (pair) {
+    document.getElementById(pair[0]).addEventListener('change', function () {
+      layers[pair[1]].style.display = this.checked ? '' : 'none';
+    });
+  });
+})();
+</script>
+</body>
+</html>
