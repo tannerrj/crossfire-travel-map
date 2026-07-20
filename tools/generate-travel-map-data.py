@@ -264,6 +264,15 @@ def main(argv):
     coast = ["M" + " ".join("%g %g" % p for p in ring) + "Z"
              for _, ring in outer]
 
+    # Streets mark the settlement itself, so prefer the region tile with the
+    # most paved squares; fall back to the tile nearest the region centroid
+    # for street-less regions. (Matters for scattered regions like the
+    # Whaling Outpost, whose centroid tile is empty ocean coast.)
+    paved_per_tile = {}
+    for (x, y) in roads["paved"]:
+        t = (x // TILE + TMIN, y // TILE + TMIN)
+        paved_per_tile[t] = paved_per_tile.get(t, 0) + 1
+
     cities = []
     for code, name in sorted(SETTLEMENTS.items(), key=lambda kv: kv[1]):
         tiles = region_tiles.get(code)
@@ -273,7 +282,8 @@ def main(argv):
             continue
         cx = sum(t[0] for t in tiles) / len(tiles)
         cy = sum(t[1] for t in tiles) / len(tiles)
-        best = min(tiles, key=lambda t: (t[0] - cx) ** 2 + (t[1] - cy) ** 2)
+        best = max(tiles, key=lambda t: (paved_per_tile.get(t, 0),
+                                         -((t[0] - cx) ** 2 + (t[1] - cy) ** 2)))
         cities.append({"name": name,
                        "x": (best[0] - TMIN) * TILE + TILE // 2,
                        "y": (best[1] - TMIN) * TILE + TILE // 2,
