@@ -6,6 +6,9 @@ and sea lanes that connect the destinations. A companion to the
 [crossfire-world-map-navigator](https://github.com/tannerrj/crossfire-world-map-navigator)
 tile navigator — clicking any city opens that location in the navigator.
 
+**[Live demo](https://tannerrj.github.io/crossfire-travel-map/)** — served from this
+repository via GitHub Pages.
+
 ![The travel map: parchment-style continent with city markers, roads, and
 sea lanes](docs/travel-map.png)
 
